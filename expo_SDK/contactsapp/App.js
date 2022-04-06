@@ -1,10 +1,10 @@
-import { StyleSheet, Text, View, Button } from "react-native";
+import React, { useState } from "react";
+import { StyleSheet, Text, View, Button, FlatList } from "react-native";
 import * as Contacts from "expo-contacts";
 import * as SMS from "expo-sms";
-import React, { useState } from "react";
 
 export default function App() {
-  const [contact, setContact] = useState([]);
+  const [contacts, setContacts] = useState([]);
 
   const getContacts = async () => {
     const { status } = await Contacts.requestPermissionsAsync();
@@ -13,25 +13,43 @@ export default function App() {
         fields: [Contacts.Fields.PhoneNumbers],
       });
       if (data.length > 0) {
-        setContact(data[0]);
+        setContacts(data);
       }
     }
   };
 
-  const sendSms = async () => {
-    const isSMSAvailable = await SMS.isAvailableAsync();
-    if (isSMSAvailable && contact.phoneNumbers.length > 0) {
-      const { result } = await SMS.sendSMSAsync(
-        [contact.phoneNumbers[0].number],
-        "Hello " + contact.name
-      );
-    }
+  const listSeparator = () => {
+    return (
+      <View
+        style={{
+          height: 1,
+          width: "80%",
+          backgroundColor: "#CED0CE",
+          marginLeft: "10%",
+        }}
+      />
+    );
   };
+
   return (
     <View style={styles.container}>
-      <Text>{contact.name}</Text>
-      <Button title="Get contact" onPress={getContacts} />
-      <Button title="Send SMS" onPress={sendSms} />
+      <FlatList
+        style={{ marginTop: 40 }}
+        data={contacts}
+        renderItem={({ item }) => (
+          <View style={{ flexDirection: "row" }}>
+            <Text style={{ fontSize: 16 }}>{item.name}</Text>
+            {item.phoneNumbers ? (
+              <Text> {item.phoneNumbers[0].number} </Text>
+            ) : (
+              <Text> No number available </Text>
+            )}
+          </View>
+        )}
+        keyExtractor={(item, index) => index.toString()}
+        ItemSeparatorComponent={listSeparator}
+      />
+      <Button title="Get contacts" onPress={getContacts} />
     </View>
   );
 }
@@ -42,5 +60,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: 30,
   },
 });
